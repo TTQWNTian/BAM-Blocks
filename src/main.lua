@@ -132,17 +132,26 @@ function love.load()
         right = { x = leftButtonX + 30, y = centerY + 40, w = 50, h = 50, label = ">", pressed = false, timer = 0 },
         fastDown = { x = leftButtonX - 5, y = centerY + 110, w = 50, h = 50, label = "⬇", pressed = false, timer = 0 },
         rotate = {
-            x = rightButtonX + 20,
-            y = centerY + 50,
+            x = rightButtonX - 10,
+            y = centerY - 10,
             w = 50,
             h = 50,
             label = "↻",
             pressed = false,
             timer = 0,
         },
+        rotateRight = {
+            x = rightButtonX - 10,
+            y = centerY + 70,
+            w = 50,
+            h = 50,
+            label = "↺",
+            pressed = false,
+            timer = 0,
+        },
         instant = {
-            x = rightButtonX + 90,
-            y = centerY + 50,
+            x = rightButtonX + 60,
+            y = centerY + 70,
             w = 120,
             h = 50,
             label = "Instant",
@@ -563,6 +572,39 @@ function game:rotatePiece()
     for y = 1, size do
         newShape[y] = {}
         for x = 1, size do
+            newShape[y][x] = oldShape[x][size - y + 1]
+        end
+    end
+
+    local rotated = false
+    if not self:checkCollision(self.currentPiece.x, self.currentPiece.y, newShape) then
+        self.currentPiece.shape = newShape
+        rotated = true
+    elseif not self:checkCollision(self.currentPiece.x - 1, self.currentPiece.y, newShape) then
+        self.currentPiece.x = self.currentPiece.x - 1
+        self.currentPiece.shape = newShape
+        rotated = true
+    elseif not self:checkCollision(self.currentPiece.x + 1, self.currentPiece.y, newShape) then
+        self.currentPiece.x = self.currentPiece.x + 1
+        self.currentPiece.shape = newShape
+        rotated = true
+    end
+
+    if rotated then
+        vibrate(0.03)
+        self.lastActionTime = 0
+        self.lockTimer = 0
+    end
+end
+
+function game:rotatePieceRight()
+    local oldShape = self.currentPiece.shape
+    local newShape = {}
+    local size = #oldShape
+
+    for y = 1, size do
+        newShape[y] = {}
+        for x = 1, size do
             newShape[y][x] = oldShape[size - x + 1][y]
         end
     end
@@ -768,6 +810,8 @@ function updateTouchButtons(dt)
                     end
                 elseif name == "rotate" then
                     game:rotatePiece()
+                elseif name == "rotateRight" then
+                    game:rotatePieceRight()
                 elseif name == "instant" then
                     game:instant()
                 elseif name == "fastDown" then
@@ -1087,8 +1131,9 @@ function resetButtonLayout()
     touch.buttons.left =      { x=leftX-40, y=centerY+40, w=50, h=50, label="<", pressed=false, timer=0 }
     touch.buttons.right =     { x=leftX+30, y=centerY+40, w=50, h=50, label=">", pressed=false, timer=0 }
     touch.buttons.fastDown =  { x=leftX-5, y=centerY+110, w=50, h=50, label="⬇", pressed=false, timer=0 }
-    touch.buttons.rotate =    { x=rightX+20, y=centerY+50, w=50, h=50, label="↻", pressed=false, timer=0 }
-    touch.buttons.instant =   { x=rightX+90, y=centerY+50, w=120, h=50, label="Instant", pressed=false, timer=0 }
+    touch.buttons.rotate =    { x=rightX-10, y=centerY+10, w=50, h=50, label="↻", pressed=false, timer=0 }
+    touch.buttons.rotateRight = { x=rightX-10, y=centerY+70, w=50, h=50, label="↺", pressed=false, timer=0 }
+    touch.buttons.instant =   { x=rightX+60, y=centerY+70, w=120, h=50, label="Instant", pressed=false, timer=0 }
     touch.buttons.restart =   { x=screen.width-155, y=40, w=130, h=50, label="Restart", pressed=false, timer=0 }
     touch.buttons.pause =     { x=40, y=40, w=80, h=50, label="Pause", pressed=false, timer=0 }
     touch.buttons.hold =      { x=leftX+120, y=centerY-50, w=50, h=50, label="", pressed=false, timer=0 }
@@ -1381,6 +1426,8 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
                 end
             elseif button == "rotate" then
                 game:rotatePiece()
+            elseif button == "rotateRight" then
+                game:rotatePieceRight()
             elseif button == "instant" then
                 game:instant()
             elseif button == "fastDown" then
